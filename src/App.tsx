@@ -107,8 +107,8 @@ function App() {
     <small>{loading ? 'Loading records' : 'connected Workspace'}</small>
    
     </div></div>
-    <div style={{ marginTop: '0.5rem' }}>
-    <small>{loading ? 'Loading records' : '© Robert Andrei Bardoquillo'}</small>
+    <div style={{ marginTop: '1rem' }}>
+    <small>© Robert Andrei Bardoquillo</small>
     </div>
     </aside>
     <main className="main-content"><header className="topbar"><div><span className="eyebrow">{activeView === 'Overview' ? monthName(selectedMonth).toUpperCase() : 'SEPTEMBER 2026'}</span><h1>{activeView === 'Overview' ? 'Good Day, KathLeng.' : activeView}</h1></div><div className="header-actions"><button className="icon-button" aria-label="Notifications">♧</button><button className="avatar">KW</button></div></header>
