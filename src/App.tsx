@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import './App.css'
 import { formatCurrency, netBalance, totalByType } from './lib/calculations'
 import { createCategory, deleteCategory, getCategories, updateCategory } from './services/category.service'
@@ -18,10 +18,25 @@ const fallbackCategories: Category[] = [
 const fallbackAllocations: Allocation[] = [
   { id: 'ALLOC-001', incomeCategoryId: 'INC-001', fundName: 'Operations', percentage: 50, active: true }, { id: 'ALLOC-002', incomeCategoryId: 'INC-001', fundName: 'Savings', percentage: 20, active: true }, { id: 'ALLOC-003', incomeCategoryId: 'INC-001', fundName: 'Ministry', percentage: 20, active: true }, { id: 'ALLOC-004', incomeCategoryId: 'INC-001', fundName: 'Emergency', percentage: 10, active: true },
 ]
-const fallbackTransactions: Transaction[] = [{ id: 'TXN-001', date: '2026-09-04', type: 'INCOME', categoryId: 'INC-001', categoryName: 'Sunday Offering', description: 'Sunday Offering', amount: 10000 }, { id: 'TXN-002', date: '2026-09-03', type: 'EXPENSE', categoryId: 'EXP-001', categoryName: 'Utilities', description: 'Electricity Bill', amount: 2500 }]
+const fallbackTransactions: Transaction[] = [{ id: 'TXN-001', date: '2026-09-04', type: 'INCOME', categoryId: 'INC-001', categoryName: 'Sunday Offering', description: 'Sunday Offering', amount: 0 }, { id: 'TXN-002', date: '2026-09-03', type: 'EXPENSE', categoryId: 'EXP-001', categoryName: 'Utilities', description: 'Electricity Bill', amount: 0 }]
 const dateLabel = (date: string) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(`${date}T00:00:00`))
 const monthLabel = (month: number) => new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(2024, month, 1))
 const currentYear = new Date().getFullYear()
+type WeekOption = { start: string; end: string; label: string }
+const dateKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+const monthKey = (date: Date) => dateKey(date).slice(0, 7)
+const monthName = (value: string) => new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(new Date(`${value}-01T00:00:00`))
+const weekStart = (date: Date) => { const result = new Date(date); const day = result.getDay(); result.setDate(result.getDate() - (day === 0 ? 6 : day - 1)); return result }
+const weekOptions = (value: string): WeekOption[] => {
+  const firstDay = new Date(`${value}-01T00:00:00`)
+  const lastDay = new Date(firstDay.getFullYear(), firstDay.getMonth() + 1, 0)
+  const options: WeekOption[] = []
+  for (let start = weekStart(firstDay); start <= lastDay; start.setDate(start.getDate() + 7)) {
+    const weekEnd = new Date(start); weekEnd.setDate(weekEnd.getDate() + 6)
+    options.push({ start: dateKey(start), end: dateKey(weekEnd), label: `${dateLabel(dateKey(start))} - ${dateLabel(dateKey(weekEnd))}` })
+  }
+  return options
+}
 
 function App() {
   const [activeView, setActiveView] = useState<View>('Overview')
@@ -36,6 +51,8 @@ function App() {
   const [notice, setNotice] = useState<Notice | null>(null)
   const [loading, setLoading] = useState(true)
   const [reportYear, setReportYear] = useState(currentYear)
+  const [selectedMonth, setSelectedMonth] = useState(monthKey(new Date()))
+  const [selectedWeekStart, setSelectedWeekStart] = useState(dateKey(weekStart(new Date())))
 
   const notify = (type: Notice['type'], message: string) => { setNotice({ type, message }); window.setTimeout(() => setNotice(null), 3500) }
   const reloadTransactions = async () => setTransactions(withCategoryNames(await getTransactions(), categories))
@@ -50,14 +67,20 @@ function App() {
   }, [])
 
   const income = totalByType(transactions, 'INCOME')
-  const expenses = totalByType(transactions, 'EXPENSE')
-  const balance = netBalance(transactions)
-  const visibleTransactions = useMemo(() => transactions.filter((transaction) => {
+  const overviewWeeks = weekOptions(selectedMonth)
+  const selectedWeek = overviewWeeks.find((week) => week.start === selectedWeekStart) || overviewWeeks[0]
+  const overviewTransactions = transactions.filter((transaction) => transaction.date >= selectedWeek.start && transaction.date <= selectedWeek.end)
+  const overviewIncome = totalByType(overviewTransactions, 'INCOME')
+  const overviewExpenses = totalByType(overviewTransactions, 'EXPENSE')
+  const overviewBalance = netBalance(overviewTransactions)
+  const monthOptions = Array.from(new Set([monthKey(new Date()), ...transactions.map((transaction) => transaction.date.slice(0, 7))])).sort().reverse()
+  const visibleTransactions = transactions.filter((transaction) => {
     const textMatch = `${transaction.description} ${transaction.categoryName}`.toLowerCase().includes(search.toLowerCase())
     const typeMatch = typeFilter === 'ALL' || transaction.type === typeFilter
     const viewMatch = activeView === 'Income' ? transaction.type === 'INCOME' : activeView === 'Expenses' ? transaction.type === 'EXPENSE' : true
-    return textMatch && typeMatch && viewMatch
-  }), [activeView, search, transactions, typeFilter])
+    const periodMatch = activeView !== 'Overview' || (transaction.date >= selectedWeek.start && transaction.date <= selectedWeek.end)
+    return textMatch && typeMatch && viewMatch && periodMatch
+  })
 
   const saveTransaction = async (input: TransactionInput) => {
     try {
@@ -88,21 +111,21 @@ function App() {
     <small>{loading ? 'Loading records' : '© Robert Andrei Bardoquillo'}</small>
     </div>
     </aside>
-    <main className="main-content"><header className="topbar"><div><span className="eyebrow">SEPTEMBER 2026</span><h1>{activeView === 'Overview' ? 'Good Day, KathLeng.' : activeView}</h1></div><div className="header-actions"><button className="icon-button" aria-label="Notifications">♧</button><button className="avatar">KW</button></div></header>
+    <main className="main-content"><header className="topbar"><div><span className="eyebrow">{activeView === 'Overview' ? monthName(selectedMonth).toUpperCase() : 'SEPTEMBER 2026'}</span><h1>{activeView === 'Overview' ? 'Good Day, KathLeng.' : activeView}</h1></div><div className="header-actions"><button className="icon-button" aria-label="Notifications">♧</button><button className="avatar">KW</button></div></header>
       {activeView === 'Categories' ? <CategoriesView categories={categories} onChanged={async (message) => { await reloadCategories(); notify('success', message) }} onError={(message) => notify('error', message)} /> : activeView === 'Allocation' ? <AllocationView allocations={allocations} income={income} onSaved={(next) => { setAllocations(next); notify('success', 'Allocations saved.') }} onError={(message) => notify('error', message)} /> : activeView === 'Reports' ? <MonthlySummary transactions={transactions} years={reportYears} year={reportYear} setYear={setReportYear} /> : <>
-        <div className="page-toolbar"><div><p className="page-kicker">FINANCIAL SNAPSHOT</p><p className="muted">{loading ? 'Loading your Google Sheets ledger...' : 'Keep your giving and spending in clear view.'}</p></div><button className="primary-button" onClick={openNew}><span>+</span> New transaction</button></div>
+        <div className="page-toolbar"><div><p className="page-kicker">FINANCIAL SNAPSHOT</p><p className="muted">{loading ? 'Loading your Google Sheets ledger...' : activeView === 'Overview' ? `Showing ${selectedWeek.label}.` : 'Keep your giving and spending in clear view.'}</p></div><div className="toolbar-actions">{activeView === 'Overview' && <div className="overview-period"><label>Month<select value={selectedMonth} onChange={(event) => { const nextMonth = event.target.value; setSelectedMonth(nextMonth); setSelectedWeekStart(weekOptions(nextMonth)[0]?.start || `${nextMonth}-01`) }}>{monthOptions.map((option) => <option key={option} value={option}>{monthName(option)}</option>)}</select></label><label>Week<select value={selectedWeek.start} onChange={(event) => setSelectedWeekStart(event.target.value)}>{overviewWeeks.map((week) => <option key={week.start} value={week.start}>{week.label}</option>)}</select></label></div>}<button className="primary-button" onClick={openNew}><span>+</span> New transaction</button></div></div>
         {activeView === 'Overview' && <>
         <section className="summary-grid">
-          <SummaryCard label="Available balance" amount={balance} tone="balance" detail="Across all accounts" />
-          <SummaryCard label="Total income" amount={income} tone="income" detail="This month" />
-          <SummaryCard label="Total expenses" amount={expenses} tone="expense" detail="This month" /></section><section className="content-grid"><div className="panel chart-panel"><div className="panel-heading">
+          <SummaryCard label="Available balance" amount={overviewBalance} tone="balance" detail="Selected week" />
+          <SummaryCard label="Total income" amount={overviewIncome} tone="income" detail="Selected week" />
+          <SummaryCard label="Total expenses" amount={overviewExpenses} tone="expense" detail="Selected week" /></section><section className="content-grid"><div className="panel chart-panel"><div className="panel-heading">
          <div>
             <h2>Cash flow</h2><p className="muted">Income versus expenses</p>
             </div>
             </div>
              
-            <div className="chart"><div className="chart-total">{formatCurrency(balance)}
-          <span>net this month</span>
+              <div className="chart"><div className="chart-total">{formatCurrency(overviewBalance)}
+            <span>net selected week</span>
 
           </div>
           {/*
@@ -115,7 +138,7 @@ function App() {
           <div className="panel-heading"><div>
           <h2>Income allocation</h2><p className="muted">Offering distribution</p></div><button className="text-button" onClick={() => setActiveView('Allocation')}>Edit</button></div><div className="allocation-list allocation-summary">{allocations.map((item, index) => 
           <div className="allocation-row" key={item.id}><span><i className={`dot ${['teal', 'blue', 'coral', 'gold'][index % 4]}`} />{item.fundName}</span>
-          <strong>{item.percentage}% <small>{formatCurrency(income * Number(item.percentage) / 100)}</small></strong>
+          <strong>{item.percentage}% <small>{formatCurrency(overviewIncome * Number(item.percentage) / 100)}</small></strong>
           </div>
           )} 
             </div>

@@ -184,6 +184,55 @@
   margin: 42px 0 18px;
 }
 
+.toolbar-actions,
+.overview-period {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+
+.overview-period label {
+  display: grid;
+  gap: 5px;
+  color: #806875;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.overview-period select {
+  appearance: none;
+  border: 1px solid #eccedc;
+  border-radius: 8px;
+  min-height: 38px;
+  min-width: 125px;
+  padding: 0 32px 0 11px;
+  color: #713f55;
+  background-color: #fff;
+  background-image: linear-gradient(45deg, transparent 50%, #c47797 50%), linear-gradient(135deg, #c47797 50%, transparent 50%);
+  background-position: calc(100% - 15px) 16px, calc(100% - 10px) 16px;
+  background-repeat: no-repeat;
+  background-size: 5px 5px, 5px 5px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.overview-period label:last-child select {
+  min-width: 190px;
+}
+
+.overview-period select:hover {
+  border-color: #d982a5;
+}
+
+.overview-period select:focus {
+  border-color: #d86f98;
+  box-shadow: 0 0 0 3px #f7d8e5;
+}
+
 .page-kicker {
   margin: 0 0 6px;
   color: #d86f98;
@@ -1102,6 +1151,22 @@ td {
     align-items: flex-start;
     gap: 15px;
     margin-top: 30px;
+  }
+
+  .toolbar-actions,
+  .overview-period {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .overview-period {
+    gap: 8px;
+  }
+
+  .overview-period label:last-child select,
+  .overview-period select {
+    width: 100%;
   }
 
   .page-toolbar .primary-button {
