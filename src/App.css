@@ -1075,6 +1075,176 @@ td {
   margin-top: 95px;
 }
 
+
+.monthly-summary {
+  margin-top: 15px;
+  overflow: hidden;
+}
+
+.report-charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.report-chart {
+  min-width: 0;
+  padding: 22px;
+}
+
+.report-chart .legend {
+  position: static;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.report-chart-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.chart-period {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #76565b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.chart-period select {
+  border: 1px solid #e3cbcd;
+  border-radius: 6px;
+  padding: 6px 7px;
+  color: #76565b;
+  background: #fff;
+  font-size: 10px;
+}
+
+.report-bars {
+  height: 205px;
+  display: flex;
+  align-items: end;
+  gap: 9px;
+  margin-top: 24px;
+  padding: 0 4px 25px;
+  overflow-x: auto;
+  border-bottom: 1px solid #eee1e2;
+}
+
+.report-bar-group {
+  min-width: 36px;
+  height: 100%;
+  display: flex;
+  align-items: end;
+  flex: 1;
+  position: relative;
+}
+
+.report-bar-pair {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 9px;
+}
+
+.report-bar-column {
+  height: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  flex-direction: column;
+  position: relative;
+}
+
+.report-bar-value {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  color: #76565b;
+  font-size: 8px;
+  line-height: 1;
+  white-space: nowrap;
+  font-weight: 600;
+  z-index: 2;
+}
+
+/* Income value */
+.report-bar-column:first-child .report-bar-value {
+  transform: translateX(-3px);
+}
+
+/* Expense value */
+.report-bar-column:last-child .report-bar-value {
+  transform: translateX(3px);
+}
+
+.report-chart-bar {
+  width: 10px;
+  min-height: 0;
+  border-radius: 4px 4px 0 0;
+  animation: rise .6s ease both;
+}
+
+.report-bar-group small {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  color: #a8999f;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.chart-empty {
+  height: 205px;
+  display: grid;
+  place-items: center;
+  color: #9b8c92;
+  font-size: 12px;
+}
+
+.monthly-summary .panel-heading {
+  padding: 22px 22px 16px;
+}
+
+.monthly-table-wrap {
+  overflow-x: auto;
+}
+
+.monthly-summary + .monthly-summary {
+  margin-top: 15px;
+}
+
+@media (max-width: 620px) {
+  .report-charts {
+    grid-template-columns: 1fr;
+  }
+
+  .report-chart {
+    padding: 17px;
+  }
+
+  .report-chart-actions {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .allocation-actions {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .report-page .page-toolbar {
+    align-items: flex-start;
+  }
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;
